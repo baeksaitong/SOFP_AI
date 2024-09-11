@@ -1,6 +1,6 @@
-from color_analyzer import ColorAnalyzer
-from shape_detector import ShapeDetector
-from image_processor import ImageProcessor
+from .color_analyzer import ColorAnalyzer
+from .shape_detector import ShapeDetector
+from .image_processor import ImageProcessor
 
 
 class ImageAnalysis:
