@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 class ShapeDetector:
     """모양 검출을 위한 클래스"""
 
@@ -17,18 +18,18 @@ class ShapeDetector:
 
         # 꼭짓점 수에 따라 도형 추정
         if vertices == 3:
-            return "Triangle"
+            return "삼각형"  # Triangle
         elif vertices == 4:
             aspect_ratio = w / float(h)
             if 0.95 <= aspect_ratio <= 1.05:
-                return "Square"
+                return "사각형"  # Square
             else:
-                return "Ellipse"  # 직사각형이라고 판단될 경우 타원형으로 출력
+                return "타원형"  # 직사각형이라고 판단될 경우 타원형으로 출력 | Ellipse
         elif vertices == 5:
-            return "Pentagon"
+            return "오각형"  # Pentagon
         elif vertices == 6:
-            return "Hexagon"
+            return "육각형"    # Hexagon
         elif vertices == 8:
-            return "Octagon"
+            return "팔각형"    # Octagon
         else:
-            return "Circle"
+            return "원형"     # Circle
