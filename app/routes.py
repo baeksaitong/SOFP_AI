@@ -7,6 +7,7 @@ from .upload_handler import handle_file_upload
 
 routes = Blueprint('routes', __name__)
 
+# 데이터베이스 연결
 db = Database(db_name="image_analysis_db", user="postgres", password="1234")
 
 
@@ -17,33 +18,38 @@ def analyze_image():
     if error:
         return create_response(error=error, status=status)
 
-    # 이미지 분석 (색상 및 모양)
-    image_analysis = ImageAnalysis()
-    dominant_colors, shape = image_analysis.analyze_image(filepath)
+    # 이미지 분석 수행
+    analysis = ImageAnalysis()
+    image_color_data, image_shape = analysis.analyze_image(filepath)
 
-    # 분석 결과를 JSON 형식으로 구조화
-    result = {
-        "Colors": dominant_colors,  # 예: [('갈색', 52530), ('파랑', 12345)]
-        "Shape": shape  # 예: '타원형'
-    }
+    # color에서 숫자를 제거 후, 리스트를 단순화 (색상 이름만 추출)
+    image_colors = [color[0] for color in image_color_data]
 
-    # 이미지 데이터를 바이너리 형식으로 읽기
-    with open(filepath, 'rb') as img_file:
-        image_data = img_file.read()
+    # 분석 결과를 데이터베이스에 저장
+    inserted_id = db.insert_result(filepath, color=", ".join(image_colors), shape=image_shape)
 
-    # result를 JSON 문자열로 변환
-    result_json = json.dumps(result)
+    # 결과 반환 (색상은 문자열로 반환)
+    return create_response(data={
+        "id": inserted_id,
+        "color": ", ".join(image_colors),  # 필요없는 부분 제거 후, 색상 이름만 반환
+        "shape": image_shape
+    })
 
-    # 데이터베이스에 분석 결과 저장
-    record_id = db.insert_analysis(image_data, result_json)
 
-    # 최소화된 JSON 응답 생성
-    response_data = {
-        'data': {
-            'id': record_id,
-            'result': result
-        }
-    }
 
-    # compact JSON 형식으로 응답 (separators 사용하여 공백 최소화)
-    return Response(json.dumps(response_data, separators=(',', ':')), mimetype='application/json')
+@routes.route('/results', methods=['GET'])
+def get_results():
+    # 데이터베이스에서 결과 가져오기
+    results = db.fetch_results()
+    response_data = []
+
+    # 결과를 JSON으로 변환
+    for row in results:
+        response_data.append({
+            "image_path": row[0],
+            "color": row[1],  # 색상 값
+            "shape": row[2],  # 모양 값
+            "analyzed_at": row[3]
+        })
+
+    return create_response(data=response_data)

@@ -22,11 +22,21 @@ class ImageProcessor:
     def crop_shape(self, image, bounding_box):
         """
         윤곽선을 기준으로 이미지를 자릅니다.
+        알파 채널이 있는 경우와 없는 경우를 모두 처리합니다.
         """
         left_x, right_x, left_y, right_y = bounding_box
         cropped_image = image[left_y:right_y, left_x:right_x]
-        trans_mask = cropped_image[:, :, 3] == 0
-        cropped_image[trans_mask] = [255, 255, 255, 255]
+
+        # 이미지가 알파 채널(RGBA)이 있는지 확인
+        if cropped_image.shape[2] == 4:
+            # 알파 채널이 있을 때 처리
+            trans_mask = cropped_image[:, :, 3] == 0
+            cropped_image[trans_mask] = [255, 255, 255, 255]
+        else:
+            # 알파 채널이 없을 때 (RGB 이미지)
+            trans_mask = np.zeros(cropped_image.shape[:2], dtype=bool)  # 투명 영역 없음
+            cropped_image[trans_mask] = [255, 255, 255]
+
         return cropped_image
 
     def get_bounding_box(self, contours):
